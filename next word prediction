@@ -1,0 +1,78 @@
+import pandas as pd
+import numpy as np
+import keras
+import cv2
+import re
+import joblib
+import pickle
+Using TensorFlow backend.
+dataset=pd.read_csv(r'C:\Users\samal\Restaurant_Reviews.tsv',delimiter='\t')
+dataset
+
+dataset.drop('Liked',axis=1,inplace=True)
+dataset
+Review
+corpus=[]
+for i in range(0,1000):
+    review=dataset['Review'][i]
+    review=re.sub('[^a-zA-Z]',' ',review)
+    review=review.lower()
+    corpus.append(review)
+corpus
+#TOKENIZATION
+from keras.preprocessing.text import Tokenizer
+tokenizer=Tokenizer()
+tokenizer.fit_on_texts(corpus)
+len(tokenizer.word_index)
+2022
+tokenizer.word_index
+token_list=tokenizer.texts_to_sequences(corpus)
+token_list
+max_sequence_len=max([len(x) for x in input_sequences])
+max_sequence_len
+32
+#PADDING -ADDING ZEROS
+from keras.preprocessing.sequence import pad_sequences
+#padding='pre'-adds zero before
+#padding='post'-adds zero after
+input_sequences=pad_sequences(input_sequences,maxlen=max_sequence_len,padding='pre')
+input_sequences
+#TAKING THE OUTPUTS
+x=input_sequences[:,:-1]
+x
+y=input_sequences[:,-1]
+y
+array([167,   9,  15, ..., 343,   1, 248])
+y=keras.utils.to_categorical(y,num_classes=2023)
+y
+#EMBEDDING OR WORD2VEC (USE EITHER WORD2VEC OR SKIP GRAM)
+SKIP GRAM
+from keras.layers import Embedding
+from keras.preprocessing.sequence import skipgrams
+from keras.models import Sequential
+from keras.layers import LSTM
+from keras.layers import Dense
+#INITIALIZE NN MODEL
+model=Sequential()
+total_word=2023
+model.add(skipgrams(input_dim=total_word,output_dim=15,input_length=max_sequence_len-1))
+#input layer
+#vector of values-15 (hyperparameter)
+#independent feature sequence length
+model.add(Embedding(input_dim=total_word,output_dim=15,input_length=max_sequence_len-1))
+model.add(LSTM(return_sequences=True,units=200,kernel_initializer='glorot_uniform'))
+model.add(LSTM(return_sequences=True,units=200,kernel_initializer='glorot_uniform'))
+model.add(LSTM(return_sequences=False,units=200,kernel_initializer='glorot_uniform'))
+ADD OUTPUT LAYER
+model.add(Dense(kernel_initializer='glorot_uniform',activation='softmax',units=total_word))
+model.compile(optimizer='adam',loss='categorical_crossentropy',metrics=['accuracy'])
+model.summary()_________________________________________________________________
+model.compile(optimizer='adam',loss='mse')
+x[0]
+model.predict(x)[0]
+#DO NOT TRAIN TEST SPLIT IT WILL SEPERATE RANDOMLY DUE TO THAT THE SEQUENTIAL DATA WILL BE MISSED
+model.fit(x,y,epochs=15,batch_size=32)
+model.save('next_word_prediction.h5')
+import joblib
+joblib.dump(tokenizer,'tokenizer_nw.pkl')
+['tokenizer_nw.pkl']
